@@ -52,6 +52,9 @@
 #include <QRunnable>
 #include <QThreadPool>
 
+// OS includes
+#include <thread>
+
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_AugmentedReality
 class qPollTextureUpdateThread : public QRunnable
