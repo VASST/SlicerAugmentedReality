@@ -26,7 +26,6 @@
 class QMutex;
 class qSlicerVideoPassthroughModuleWidgetPrivate;
 class vtkMRMLNode;
-class vtkMRMLScalarVolumeNode;
 
 /// \ingroup Slicer_QtModules_AugmentedReality
 class Q_SLICER_QTMODULES_VIDEOPASSTHROUGH_EXPORT qSlicerVideoPassthroughModuleWidget :
@@ -40,8 +39,11 @@ public:
   virtual ~qSlicerVideoPassthroughModuleWidget();
 
 public slots:
-  void onLeftEyeNodeChanged(vtkMRMLScalarVolumeNode* node);
-  void onRightEyeNodeChanged(vtkMRMLScalarVolumeNode* node);
+  void onLeftEyeNodeChanged(vtkMRMLNode* node);
+  void onRightEyeNodeChanged(vtkMRMLNode* node);
+
+protected:
+  void eyeChanged();
 
 protected:
   QScopedPointer<qSlicerVideoPassthroughModuleWidgetPrivate> d_ptr;

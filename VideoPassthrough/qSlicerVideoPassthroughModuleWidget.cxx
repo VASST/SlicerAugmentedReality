@@ -57,6 +57,9 @@ public:
 
   qMRMLVirtualRealityView* VRView;
 
+  vtkMRMLScalarVolumeNode* LeftEyeNode = nullptr;
+  vtkMRMLScalarVolumeNode* RightEyeNode = nullptr;
+
   vtkTexture* LeftEyeTexture = vtkTexture::New();
   vtkTexture* RightEyeTexture = vtkTexture::New();
 
@@ -82,35 +85,19 @@ qSlicerVideoPassthroughModuleWidgetPrivate::qSlicerVideoPassthroughModuleWidgetP
 
 //-----------------------------------------------------------------------------
 qSlicerVideoPassthroughModuleWidget::qSlicerVideoPassthroughModuleWidget(QWidget* _parent)
-  : Superclass( _parent )
-  , d_ptr( new qSlicerVideoPassthroughModuleWidgetPrivate )
+  : Superclass(_parent)
+  , d_ptr(new qSlicerVideoPassthroughModuleWidgetPrivate)
 {
   Q_D(qSlicerVideoPassthroughModuleWidget);
 
-  qSlicerVirtualRealityModule* module = dynamic_cast<qSlicerVirtualRealityModule*>(qSlicerApplication::application()->moduleManager()->module("virtualreality"));
+  qSlicerVirtualRealityModule* module = dynamic_cast<qSlicerVirtualRealityModule*>(qSlicerApplication::application()->moduleManager()->module("VirtualReality"));
   assert(module); // dependency system should have assured us this exists
 
   // Workaround: find view via findChildren approach as module function is not exported
   qSlicerVirtualRealityModuleWidget* widget = dynamic_cast<qSlicerVirtualRealityModuleWidget*>(module->widgetRepresentation());
   assert(widget); // ensure that widget has been created, lazy creation should guarantee this existence
 
-  qMRMLVirtualRealityView* view(nullptr);
-
-  auto list = qSlicerApplication::application()->topLevelWidgets();
-  for (auto iter = list.begin(); iter != list.end(); ++iter)
-  {
-    auto item = *iter;
-    if (item->objectName().compare("VirtualRealityWidget") == 0)
-    {
-      view = dynamic_cast<qMRMLVirtualRealityView*>(item);
-      assert(view);
-
-      d->VRView = view;
-      d->VRView->renderer()->SetTexturedBackground(true);
-      d->VRView->renderer()->SetLeftBackgroundTexture(d->LeftEyeTexture);
-      d->VRView->renderer()->SetRightBackgroundTexture(d->RightEyeTexture);
-    }
-  }
+  d->VRView = module->viewWidget();
 }
 
 //-----------------------------------------------------------------------------
@@ -118,22 +105,59 @@ qSlicerVideoPassthroughModuleWidget::~qSlicerVideoPassthroughModuleWidget()
 {
   Q_D(qSlicerVideoPassthroughModuleWidget);
 
+  QWidget::disconnect(d->comboBox_leftEye, static_cast<void (qMRMLNodeComboBox::*)(vtkMRMLNode*)>(&qMRMLNodeComboBox::currentNodeChanged), this, &qSlicerVideoPassthroughModuleWidget::onLeftEyeNodeChanged);
+  QWidget::disconnect(d->comboBox_rightEye, static_cast<void (qMRMLNodeComboBox::*)(vtkMRMLNode*)>(&qMRMLNodeComboBox::currentNodeChanged), this, &qSlicerVideoPassthroughModuleWidget::onRightEyeNodeChanged);
 }
 
 //----------------------------------------------------------------------------
-void qSlicerVideoPassthroughModuleWidget::onLeftEyeNodeChanged(vtkMRMLScalarVolumeNode* node)
+void qSlicerVideoPassthroughModuleWidget::onLeftEyeNodeChanged(vtkMRMLNode* node)
 {
   Q_D(qSlicerVideoPassthroughModuleWidget);
 
-  d->LeftEyeTexture->SetInputDataObject(node->GetImageData());
+  vtkMRMLScalarVolumeNode* scalarNode = vtkMRMLScalarVolumeNode::SafeDownCast(node);
+
+  d->LeftEyeNode = scalarNode;
+  if (node != nullptr)
+  {
+    d->LeftEyeTexture->SetInputDataObject(scalarNode->GetImageData());
+  }
+
+  eyeChanged();
 }
 
 //----------------------------------------------------------------------------
-void qSlicerVideoPassthroughModuleWidget::onRightEyeNodeChanged(vtkMRMLScalarVolumeNode* node)
+void qSlicerVideoPassthroughModuleWidget::onRightEyeNodeChanged(vtkMRMLNode* node)
 {
   Q_D(qSlicerVideoPassthroughModuleWidget);
 
-  d->RightEyeTexture->SetInputDataObject(node->GetImageData());
+  vtkMRMLScalarVolumeNode* scalarNode = vtkMRMLScalarVolumeNode::SafeDownCast(node);
+
+  d->RightEyeNode = scalarNode;
+  if (node != nullptr)
+  {
+    d->RightEyeTexture->SetInputDataObject(scalarNode->GetImageData());
+  }
+
+  eyeChanged();
+}
+
+//----------------------------------------------------------------------------
+void qSlicerVideoPassthroughModuleWidget::eyeChanged()
+{
+  Q_D(qSlicerVideoPassthroughModuleWidget);
+
+  if (d->LeftEyeNode != nullptr && d->RightEyeNode != nullptr)
+  {
+    d->VRView->renderer()->SetTexturedBackground(true);
+    d->VRView->renderer()->SetLeftBackgroundTexture(d->LeftEyeTexture);
+    d->VRView->renderer()->SetRightBackgroundTexture(d->RightEyeTexture);
+  }
+  else
+  {
+    d->VRView->renderer()->SetTexturedBackground(false);
+    d->VRView->renderer()->SetLeftBackgroundTexture(nullptr);
+    d->VRView->renderer()->SetRightBackgroundTexture(nullptr);
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -142,4 +166,7 @@ void qSlicerVideoPassthroughModuleWidget::setup()
   Q_D(qSlicerVideoPassthroughModuleWidget);
   d->setupUi(this);
   this->Superclass::setup();
+
+  QWidget::connect(d->comboBox_leftEye, static_cast<void (qMRMLNodeComboBox::*)(vtkMRMLNode*)>(&qMRMLNodeComboBox::currentNodeChanged), this, &qSlicerVideoPassthroughModuleWidget::onLeftEyeNodeChanged);
+  QWidget::connect(d->comboBox_rightEye, static_cast<void (qMRMLNodeComboBox::*)(vtkMRMLNode*)>(&qMRMLNodeComboBox::currentNodeChanged), this, &qSlicerVideoPassthroughModuleWidget::onRightEyeNodeChanged);
 }

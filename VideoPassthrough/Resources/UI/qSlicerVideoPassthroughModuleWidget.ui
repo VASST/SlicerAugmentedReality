@@ -34,6 +34,9 @@
           <string>vtkMRMLScalarVolumeNode</string>
          </stringlist>
         </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
       <item row="1" column="1">
@@ -42,6 +45,9 @@
          <stringlist>
           <string>vtkMRMLScalarVolumeNode</string>
          </stringlist>
+        </property>
+        <property name="noneEnabled">
+         <bool>true</bool>
         </property>
        </widget>
       </item>

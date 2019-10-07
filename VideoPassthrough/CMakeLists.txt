@@ -1,7 +1,7 @@
 
 #-----------------------------------------------------------------------------
 set(MODULE_NAME VideoPassthrough)
-set(MODULE_TITLE ${MODULE_NAME})
+set(MODULE_TITLE "Video Passthrough")
 
 string(TOUPPER ${MODULE_NAME} MODULE_NAME_UPPER)
 

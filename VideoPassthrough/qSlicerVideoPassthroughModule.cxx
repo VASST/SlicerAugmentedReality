@@ -62,13 +62,13 @@ qSlicerVideoPassthroughModule::~qSlicerVideoPassthroughModule()
 //-----------------------------------------------------------------------------
 QString qSlicerVideoPassthroughModule::helpText() const
 {
-  return "This is a loadable module that can be bundled in an extension";
+  return "This is a loadable module that sets the left and right eye background textures on a OpenVR device";
 }
 
 //-----------------------------------------------------------------------------
 QString qSlicerVideoPassthroughModule::acknowledgementText() const
 {
-  return "This work was partially funded by NIH grant NXNNXXNNNNNN-NNXN";
+  return "This work was partially funded by BrainsCAN.";
 }
 
 //-----------------------------------------------------------------------------
@@ -94,7 +94,7 @@ QStringList qSlicerVideoPassthroughModule::categories() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerVideoPassthroughModule::dependencies() const
 {
-  return QStringList() << "virtualreality";
+  return QStringList() << "VirtualReality";
 }
 
 //-----------------------------------------------------------------------------
