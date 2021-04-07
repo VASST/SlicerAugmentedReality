@@ -59,6 +59,9 @@ public:
   vtkMRMLVolumeNode* videoSourceNode = nullptr;
 
   vtkTexture* BackgroundTexture = nullptr;
+
+  unsigned long ImageObserverTag = 0;
+
 public:
   qSlicerTrackedScreenARModuleWidgetPrivate();
   ~qSlicerTrackedScreenARModuleWidgetPrivate();
@@ -123,6 +126,14 @@ void qSlicerTrackedScreenARModuleWidget::onVideoSourceNodeChanged(const QString&
   Q_D(qSlicerTrackedScreenARModuleWidget);
 
   vtkMRMLNode* node = this->mrmlScene()->GetNodeByID(nodeId.toStdString());
+
+  if (d->videoSourceNode != nullptr && d->videoSourceNode != node)
+  {
+    d->videoSourceNode->RemoveObserver(d->ImageObserverTag);
+    d->ImageObserverTag = 0;
+    d->videoSourceNode = nullptr;
+  }
+
   if (node == nullptr || vtkMRMLVolumeNode::SafeDownCast(node)->GetImageData() == nullptr)
   {
     qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->renderWindow()->GetRenderers()->GetFirstRenderer()->SetTexturedBackground(false);
@@ -133,12 +144,10 @@ void qSlicerTrackedScreenARModuleWidget::onVideoSourceNodeChanged(const QString&
     d->videoSourceNode = vtkMRMLVolumeNode::SafeDownCast(node);
 
     qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->renderWindow()->GetRenderers()->GetFirstRenderer()->SetTexturedBackground(true);
+    d->BackgroundTexture->SetInputDataObject(d->videoSourceNode->GetImageData());
     qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->renderWindow()->GetRenderers()->GetFirstRenderer()->SetLeftBackgroundTexture(d->BackgroundTexture);
 
-    d->BackgroundTexture->SetInputDataObject(d->videoSourceNode->GetImageData());
-
-    // render update not triggering
-    // is background texture modified triggering render? is image data modified not triggering texture modified? is new image from igtlink not triggering modified?
+    d->ImageObserverTag = d->videoSourceNode->GetImageData()->AddObserver(vtkCommand::ModifiedEvent, this, &qSlicerTrackedScreenARModuleWidget::onImageDataModified);
 
     // Finally, trigger any camera parameter setting
     if (d->cameraParametersNode != nullptr)
@@ -179,6 +188,12 @@ void qSlicerTrackedScreenARModuleWidget::onVideoSourceParametersNodeChanged(cons
   {
     d->cameraParametersNode = nullptr;
   }
+}
+
+//----------------------------------------------------------------------------
+void qSlicerTrackedScreenARModuleWidget::onImageDataModified()
+{
+  qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->scheduleRender();
 }
 
 //-----------------------------------------------------------------------------

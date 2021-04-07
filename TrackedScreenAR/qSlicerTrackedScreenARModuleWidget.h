@@ -33,7 +33,6 @@ class Q_SLICER_QTMODULES_TRACKEDSCREENAR_EXPORT qSlicerTrackedScreenARModuleWidg
   Q_OBJECT
 
 public:
-
   typedef qSlicerAbstractModuleWidget Superclass;
   qSlicerTrackedScreenARModuleWidget(QWidget* parent = 0);
   virtual ~qSlicerTrackedScreenARModuleWidget();
@@ -42,6 +41,9 @@ public slots:
   void onCameraTransformNodeChanged(const QString& nodeId);
   void onVideoSourceNodeChanged(const QString& nodeId);
   void onVideoSourceParametersNodeChanged(const QString& nodeId);
+
+protected:
+  void onImageDataModified();
 
 protected:
   QScopedPointer<qSlicerTrackedScreenARModuleWidgetPrivate> d_ptr;
