@@ -41,6 +41,7 @@ public slots:
   void onCameraTransformNodeChanged(const QString& nodeId);
   void onVideoSourceNodeChanged(const QString& nodeId);
   void onVideoSourceParametersNodeChanged(const QString& nodeId);
+  void onResetViewClicked();
 
 protected:
   void onImageDataModified();

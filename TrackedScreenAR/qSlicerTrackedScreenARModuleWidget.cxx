@@ -118,6 +118,8 @@ void qSlicerTrackedScreenARModuleWidget::onCameraTransformNodeChanged(const QStr
   // parent camera by transform
   vtkMRMLCameraNode* camera = qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->cameraNode();
   camera->SetAndObserveTransformNodeID(node->GetID());
+
+  this->onResetViewClicked();
 }
 
 //----------------------------------------------------------------------------
@@ -191,6 +193,12 @@ void qSlicerTrackedScreenARModuleWidget::onVideoSourceParametersNodeChanged(cons
 }
 
 //----------------------------------------------------------------------------
+void qSlicerTrackedScreenARModuleWidget::onResetViewClicked()
+{
+  qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->cameraNode()->GetCamera()->GetViewTransformMatrix()->Identity();
+}
+
+//----------------------------------------------------------------------------
 void qSlicerTrackedScreenARModuleWidget::onImageDataModified()
 {
   qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->scheduleRender();
@@ -203,6 +211,8 @@ void qSlicerTrackedScreenARModuleWidget::setup()
   d->setupUi(this);
   this->Superclass::setup();
 
-
   connect(d->comboBox_VideoSource, &qMRMLNodeComboBox::currentNodeIDChanged, this, &qSlicerTrackedScreenARModuleWidget::onVideoSourceNodeChanged);
+  connect(d->comboBox_VideoCameraParameters, &qMRMLNodeComboBox::currentNodeIDChanged, this, &qSlicerTrackedScreenARModuleWidget::onVideoSourceParametersNodeChanged);
+  connect(d->comboBox_CameraTransform, &qMRMLNodeComboBox::currentNodeIDChanged, this, &qSlicerTrackedScreenARModuleWidget::onCameraTransformNodeChanged);
+  connect(d->pushButton_ResetView, &QPushButton::clicked, this, &qSlicerTrackedScreenARModuleWidget::onResetViewClicked);
 }
