@@ -82,7 +82,7 @@ QIcon qSlicerTrackedScreenARModule::icon() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerTrackedScreenARModule::categories() const
 {
-  return QStringList() << "IGT";
+  return QStringList() << "Augmented Reality";
 }
 
 //-----------------------------------------------------------------------------

@@ -88,7 +88,7 @@ QIcon qSlicerVideoPassthroughModule::icon() const
 //-----------------------------------------------------------------------------
 QStringList qSlicerVideoPassthroughModule::categories() const
 {
-  return QStringList() << "Virtual Reality";
+  return QStringList() << "Augmented Reality";
 }
 
 //-----------------------------------------------------------------------------
