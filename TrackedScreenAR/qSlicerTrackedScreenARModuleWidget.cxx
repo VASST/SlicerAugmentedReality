@@ -195,7 +195,26 @@ void qSlicerTrackedScreenARModuleWidget::onVideoSourceParametersNodeChanged(cons
 //----------------------------------------------------------------------------
 void qSlicerTrackedScreenARModuleWidget::onResetViewClicked()
 {
-  qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->cameraNode()->GetCamera()->GetViewTransformMatrix()->Identity();
+  vtkMRMLCameraNode* camNode = qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->cameraNode();
+
+  if (camNode->GetParentTransformNode() != nullptr)
+  {
+    vtkNew<vtkMatrix4x4> transform;
+    camNode->GetParentTransformNode()->GetMatrixTransformToWorld(transform);
+    double origin[3] = { transform->GetElement(0, 3), transform->GetElement(1, 3), transform->GetElement(2, 3) };
+
+    // Pull out Y
+    double viewUp[3] = { transform->GetElement(0, 1), transform->GetElement(1, 1), transform->GetElement(2, 1) };
+
+    // Pull out lookAt
+    double lookAt[3] = { origin[0] + transform->GetElement(0, 2), origin[1] + transform->GetElement(1, 2), origin[2] + transform->GetElement(2, 2) };
+
+    camNode->GetCamera()->SetPosition(origin);
+    camNode->GetCamera()->SetViewUp(viewUp);
+    camNode->GetCamera()->SetFocalPoint(lookAt);
+
+    camNode->GetAppliedTransform()->DeepCopy(transform);
+  }
 }
 
 //----------------------------------------------------------------------------
