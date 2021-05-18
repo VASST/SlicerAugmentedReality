@@ -10,7 +10,7 @@ set(EXTENSION_CONTRIBUTORS "Adam Rankin (Robarts Research Institute)")
 set(EXTENSION_DESCRIPTION "This extensions provides the infrastructure to develop augmented reality applications")
 set(EXTENSION_ICONURL "http://www.example.com/Slicer/Extensions/SlicerAugmentedReality.png")
 set(EXTENSION_SCREENSHOTURLS "http://www.example.com/Slicer/Extensions/AugmentedReality/Screenshots/1.png")
-set(EXTENSION_DEPENDS "SlicerVirtualReality SlicerVideoCameras") # Specified as a space separated string, a list or 'NA' if any
+set(EXTENSION_DEPENDS "SlicerVirtualReality SlicerPinholeCameras") # Specified as a space separated string, a list or 'NA' if any
 
 #-----------------------------------------------------------------------------
 # Extension dependencies
@@ -20,8 +20,8 @@ include(${Slicer_USE_FILE})
 find_package(SlicerVirtualReality REQUIRED)
 mark_as_advanced(SlicerVirtualReality_DIR)
 
-find_package(SlicerVideoCameras REQUIRED)
-mark_as_advanced(SlicerVideoCameras_DIR)
+find_package(SlicerPinholeCameras REQUIRED)
+mark_as_advanced(SlicerPinholeCameras_DIR)
 
 #-----------------------------------------------------------------------------
 # Extension modules

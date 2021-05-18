@@ -51,7 +51,7 @@
        <widget class="qMRMLNodeComboBox" name="comboBox_VideoCameraParameters">
         <property name="nodeTypes">
          <stringlist>
-          <string>vtkMRMLVideoCameraNode</string>
+          <string>vtkMRMLPinholeCameraNode</string>
          </stringlist>
         </property>
         <property name="noneEnabled">

@@ -36,7 +36,7 @@
 #include <vtkMRMLVectorVolumeNode.h>
 
 // Video cameras include
-#include <vtkMRMLVideoCameraNode.h>
+#include <vtkMRMLPinholeCameraNode.h>
 
 // ITK includes
 #include <vnl_math.h>
@@ -55,7 +55,7 @@ class qSlicerTrackedScreenARModuleWidgetPrivate: public Ui_qSlicerTrackedScreenA
 {
 public:
   vtkMRMLLinearTransformNode* cameraTransformNode = nullptr;
-  vtkMRMLVideoCameraNode* cameraParametersNode = nullptr;
+  vtkMRMLPinholeCameraNode* cameraParametersNode = nullptr;
   vtkMRMLVolumeNode* videoSourceNode = nullptr;
 
   vtkTexture* BackgroundTexture = nullptr;
@@ -166,9 +166,9 @@ void qSlicerTrackedScreenARModuleWidget::onVideoSourceParametersNodeChanged(cons
 
   // make VTK camera parameters match new camera intrinsics
   vtkMRMLNode* node = this->mrmlScene()->GetNodeByID(nodeId.toStdString());
-  if (node != nullptr && vtkMRMLVideoCameraNode::SafeDownCast(node) != nullptr && d->videoSourceNode != nullptr)
+  if (node != nullptr && vtkMRMLPinholeCameraNode::SafeDownCast(node) != nullptr && d->videoSourceNode != nullptr)
   {
-    vtkMRMLVideoCameraNode* videoCameraNode = vtkMRMLVideoCameraNode::SafeDownCast(node);
+    vtkMRMLPinholeCameraNode* videoCameraNode = vtkMRMLPinholeCameraNode::SafeDownCast(node);
     d->cameraParametersNode = videoCameraNode;
 
     vtkCamera* camera = qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->cameraNode()->GetCamera();
