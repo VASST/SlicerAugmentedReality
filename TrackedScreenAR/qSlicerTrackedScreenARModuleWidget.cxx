@@ -207,7 +207,7 @@ void qSlicerTrackedScreenARModuleWidget::onResetViewClicked()
     double viewUp[3] = { transform->GetElement(0, 1), transform->GetElement(1, 1), transform->GetElement(2, 1) };
 
     // Pull out lookAt
-    double lookAt[3] = { origin[0] + transform->GetElement(0, 2), origin[1] + transform->GetElement(1, 2), origin[2] + transform->GetElement(2, 2) };
+    double lookAt[3] = { origin[0] - transform->GetElement(0, 2), origin[1] - transform->GetElement(1, 2), origin[2] - transform->GetElement(2, 2) };
 
     camNode->GetCamera()->SetPosition(origin);
     camNode->GetCamera()->SetViewUp(viewUp);
