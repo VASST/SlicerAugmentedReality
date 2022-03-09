@@ -49,6 +49,40 @@
 #include <vtkRendererCollection.h>
 #include <vtkTexture.h>
 
+// VNL includes
+#include <vnl/vnl_matrix_fixed.h>
+#include <vnl/algo/vnl_matrix_inverse.h>
+
+namespace
+{
+  //----------------------------------------------------------------------------
+  void ConvertVtkMatrixToVnlMatrix(const vtkMatrix4x4* inVtkMatrix, vnl_matrix_fixed<double, 4, 4>& outVnlMatrix)
+  {
+
+    for (int row = 0; row < 4; row++)
+    {
+      for (int column = 0; column < 4; column++)
+      {
+        outVnlMatrix.put(row, column, inVtkMatrix->GetElement(row, column));
+      }
+    }
+  }
+
+  //----------------------------------------------------------------------------
+  void ConvertVnlMatrixToVtkMatrix(const vnl_matrix_fixed<double, 4, 4>& inVnlMatrix, vtkMatrix4x4* outVtkMatrix)
+  {
+    outVtkMatrix->Identity();
+
+    for (int row = 0; row < 3; row++)
+    {
+      for (int column = 0; column < 4; column++)
+      {
+        outVtkMatrix->SetElement(row, column, inVnlMatrix.get(row, column));
+      }
+    }
+  }
+}
+
 //-----------------------------------------------------------------------------
 /// \ingroup Slicer_QtModules_ExtensionTemplate
 class qSlicerTrackedScreenARModuleWidgetPrivate: public Ui_qSlicerTrackedScreenARModuleWidget
@@ -173,18 +207,56 @@ void qSlicerTrackedScreenARModuleWidget::onVideoSourceParametersNodeChanged(cons
 
     vtkCamera* camera = qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->cameraNode()->GetCamera();
 
-    double xPixels = d->videoSourceNode->GetImageData()->GetDimensions()[0];
-    double yPixels = d->videoSourceNode->GetImageData()->GetDimensions()[1];
+    double imageWidth = d->videoSourceNode->GetImageData()->GetDimensions()[0];
+    double imageHeight = d->videoSourceNode->GetImageData()->GetDimensions()[1];
+    double windowWidth = qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->renderWindow()->GetSize()[0];
+    double windowHeight = qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->renderWindow()->GetSize()[1];
 
-    // Courtesy of https://gist.github.com/decrispell/fc4b69f6bedf07a3425b
-    // convert the principal point to window center (normalized coordinate system) and set it
-    double wcx = -2 * (videoCameraNode->GetIntrinsicMatrix()->GetElement(0, 2) - double(xPixels) / 2) / xPixels;
-    double wcy = 2 * (videoCameraNode->GetIntrinsicMatrix()->GetElement(1, 2) - double(yPixels) / 2) / yPixels;
-    camera->SetWindowCenter(wcx, wcy);
+    double focalLengthY = videoCameraNode->GetIntrinsicMatrix()->GetElement(1, 1);
+    if (windowHeight != imageHeight)
+    {
+      double factor = static_cast<double>(windowHeight) / static_cast<double>(imageHeight);
+      focalLengthY = focalLengthY * factor;
+    }
 
-    // convert the focal length to view angle and set it
-    double view_angle = vnl_math::deg_per_rad * (2.0 * std::atan2(yPixels / 2.0, videoCameraNode->GetIntrinsicMatrix()->GetElement(1, 1)));
-    camera->SetViewAngle(view_angle);
+    camera->SetViewAngle(2 * atan((windowHeight / 2) / focalLengthY) * 180 / vnl_math::pi);
+
+    // Calculate window center
+    double px = 0;
+    double width = 0;
+
+    double py = 0;
+    double height = 0;
+
+    if (imageWidth != windowWidth || imageHeight != windowHeight)
+    {
+      double factor = static_cast<double>(windowHeight) / static_cast<double>(imageHeight);
+
+      px = factor * videoCameraNode->GetIntrinsicMatrix()->GetElement(0, 2);
+      width = windowWidth;
+      int expectedWindowSize = vtkMath::Round(factor * static_cast<double>(imageWidth));
+      if (expectedWindowSize != windowWidth)
+      {
+        int diffX = (windowWidth - expectedWindowSize) / 2;
+        px = px + diffX;
+      }
+
+      py = factor * videoCameraNode->GetIntrinsicMatrix()->GetElement(1, 2);
+      height = windowHeight;
+    }
+    else
+    {
+      px = videoCameraNode->GetIntrinsicMatrix()->GetElement(0, 2);
+      width = imageWidth;
+
+      py = videoCameraNode->GetIntrinsicMatrix()->GetElement(1, 2);
+      height = imageHeight;
+    }
+
+    double cx = width - px;
+    double cy = py;
+
+    camera->SetWindowCenter(cx / ((width - 1) / 2) - 1, cy / ((height - 1) / 2) - 1);
   }
   else
   {
@@ -195,25 +267,16 @@ void qSlicerTrackedScreenARModuleWidget::onVideoSourceParametersNodeChanged(cons
 //----------------------------------------------------------------------------
 void qSlicerTrackedScreenARModuleWidget::onResetViewClicked()
 {
+  Q_D(qSlicerTrackedScreenARModuleWidget);
+
   vtkMRMLCameraNode* camNode = qSlicerApplication::application()->layoutManager()->threeDWidget(0)->threeDView()->cameraNode();
+  vtkMRMLLinearTransformNode* trNode = vtkMRMLLinearTransformNode::SafeDownCast(d->comboBox_CameraTransform->currentNode());
 
-  if (camNode->GetParentTransformNode() != nullptr)
+  if (trNode)
   {
-    vtkNew<vtkMatrix4x4> transform;
-    camNode->GetParentTransformNode()->GetMatrixTransformToWorld(transform);
-    double origin[3] = { transform->GetElement(0, 3), transform->GetElement(1, 3), transform->GetElement(2, 3) };
-
-    // Pull out Y
-    double viewUp[3] = { transform->GetElement(0, 1), transform->GetElement(1, 1), transform->GetElement(2, 1) };
-
-    // Pull out lookAt
-    double lookAt[3] = { origin[0] - transform->GetElement(0, 2), origin[1] - transform->GetElement(1, 2), origin[2] - transform->GetElement(2, 2) };
-
-    camNode->GetCamera()->SetPosition(origin);
-    camNode->GetCamera()->SetViewUp(viewUp);
-    camNode->GetCamera()->SetFocalPoint(lookAt);
-
-    camNode->GetAppliedTransform()->DeepCopy(transform);
+    vtkNew<vtkMatrix4x4> extrinsicTransform;
+    trNode->GetMatrixTransformToWorld(extrinsicTransform);
+    camNode->GetAppliedTransform()->DeepCopy(extrinsicTransform);
   }
 }
 
